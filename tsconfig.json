@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./build/",
+    "lib": [ "dom", "es5", "es2015.promise" ],
+    "target": "es5",
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "declaration": true
+  },
+  "include": [
+    "creator.d.ts",
+    "./src/**/*"
+  ]
+}
