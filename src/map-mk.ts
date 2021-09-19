@@ -74,10 +74,10 @@ export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
                 for (let i = keyCountDecOne; i >= 0; --i) {
                     if (maps[i] && i < keyLength) {
                         if (i === keyCountDecOne) {
-                            maps[i].delete(keys[i]);
+                            delete maps[i][keys[i]];
                         } else if ( (! Object.keys(maps[i + 1]).length) || (i + 1 === keyLength)) {
                             //当提删除得目标map为空或者缺少对于应得key意味着不管是为空也要删除
-                            maps[i].delete(keys[i]);
+                            delete maps[i][keys[i]];
                         }
                     }
                 }
