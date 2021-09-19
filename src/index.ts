@@ -5,6 +5,7 @@ export type ProcessCallback = (completedCount: number, totalCount: number, item:
 // // 资源加载的完成回调
 export type CompletedCallback = (error: Error, asset?: any) => void;
 
+const mapNameAssetTypes: {[name: string]: typeof cc.Asset} = {};
 
 interface ArgsUseAsset {
     keyUse: string;
@@ -31,23 +32,13 @@ if (!isChildClassOf) {
 //默认过期时间，单位秒
 const DELAY_FREE_DEFAULT = 60;
 
-function findIndex<Item>(arr: Item[], predicate: (item: Item) => boolean) {
-    const len = arr.length;
-    for (let i = 0; i < len; ++i) {
-        if (predicate(arr[i])) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 export class AssetAgent {
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
      * {[唯一key]:{[bundle, 资源类型, 路径]: true }}
      */
-    private _mapUses: { [key: string]: mapMK.MapMultiKeys } = {};
+    private _mapUses: { [key: string]: mapMK.MapMultiKeys<true> } = {};
     // private _mapUses: { [ key: string ]: [ string, typeof cc.Asset, cc.AssetManager.Bundle ][] } = {};
 
     private _loadingCount = 0;
@@ -56,7 +47,7 @@ export class AssetAgent {
      * 等待释放得资源
      * {[唯一key, bundle, 资源类型, 路径]: 释放时间}
      */
-    private _waitFrees: mapMK.MapMultiKeys = mapMK.createMapMultiKeys(4);
+    private _waitFrees: mapMK.MapMultiKeys<number> = mapMK.createMapMultiKeys(4);
 
     /**
      * 标记是否已经被销毁了
@@ -128,14 +119,16 @@ export class AssetAgent {
 
             // const pair: [ string, typeof cc.Asset ] = [ args.path, args.type ];
 
-            const notExists = ! assetUse.get([args.bundle, args.type, args.path]);
+            if (! mapNameAssetTypes[(args.type as any).name]) mapNameAssetTypes[(args.type as any).name] = args.type;
+
+            const notExists = ! assetUse.get([args.bundle.name, (args.type as any).name, args.path]);
 
 
             if (notExists) {
 
                 asset.addRef();
 
-                assetUse.set([args.bundle, args.type, args.path], true);
+                assetUse.set([args.bundle.name, (args.type as any).name, args.path], true);
             }
 
             // 执行完成回调
@@ -177,8 +170,8 @@ export class AssetAgent {
             assetUse && assetUse.forEach((value, keys) => {
                 this._addWaitFree({
                     keyUse: args.keyUse,
-                    bundle: keys[0],
-                    type: keys[1],
+                    bundle: cc.assetManager.getBundle(keys[0]),
+                    type: mapNameAssetTypes[keys[1]],
                     path: keys[2],
                 });
             });
@@ -193,8 +186,8 @@ export class AssetAgent {
             if (expires <= time) {
                 doFrees.push({
                     keyUse: keys[0],
-                    bundle: keys[1],
-                    type: keys[2],
+                    bundle: cc.assetManager.getBundle(keys[1]),
+                    type: mapNameAssetTypes[keys[2]],
                     path: keys[3],
                 });
             }
@@ -208,16 +201,16 @@ export class AssetAgent {
     private _doFree(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle) {
         const mapUses = this._mapUses;
         const assetUse = mapUses[keyUse];
-        assetUse.delete([bundle, type, path]);
+        assetUse.delete([bundle.name, (type as any).name, path]);
         bundle.get(path, type).decRef();
     }
 
     private _addWaitFree(args: ArgsFreeAsset) {
-        this._waitFrees.set([args.keyUse, args.bundle, args.type, args.path], this._time + this._delayFree);
+        this._waitFrees.set([args.keyUse, args.bundle.name, (args.type as any).name, args.path], this._time + this._delayFree);
     }
 
     private _removeWaitFree(args: ArgsUseAsset) {
-        this._waitFrees.delete([args.keyUse, args.bundle, args.type, args.path]);
+        this._waitFrees.delete([args.keyUse, args.bundle.name, (args.type as any).name, args.path]);
     }
 
     private _update() {
@@ -233,7 +226,7 @@ export class AssetAgent {
         for (let key in mapUses) {
             const assetUse = mapUses[key];
             assetUse && assetUse.forEach((_, keys) => {
-                const asset = (keys[0] as cc.AssetManager.Bundle).get(keys[2], keys[1]);
+                const asset = cc.assetManager.getBundle(keys[0]).get(keys[2], mapNameAssetTypes[keys[1]]);
                 asset.decRef();
             });
         }
