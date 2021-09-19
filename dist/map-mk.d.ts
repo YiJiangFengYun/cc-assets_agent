@@ -1,8 +1,8 @@
-export declare function createMapMultiKeys(keyCount: number): {
-    get(keys: any[]): any;
-    set(keys: any[], value: any): void;
+export declare type MapMultiKeys<T> = {
+    get(keys: string[]): T;
+    set(keys: string[], value: T): void;
     clear(): void;
-    delete(keys: any[]): void;
-    forEach(fun: (value: any, keys: any[]) => void): void;
+    delete(keys: string[]): void;
+    forEach(fun: (value: any, keys: string[]) => void): void;
 };
-export declare type MapMultiKeys = ReturnType<typeof createMapMultiKeys>;
+export declare function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T>;

@@ -1,3 +1,4 @@
+import * as mapMK from "./map-mk";
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 export declare type CompletedCallback = (error: Error, asset?: any) => void;
 export declare class AssetAgent {
@@ -23,13 +24,7 @@ export declare class AssetAgent {
     constructor(delayFree?: number);
     del(): void;
     init(delayFree?: number): void;
-    getUseInfo(id: string): {
-        get(keys: any[]): any;
-        set(keys: any[], value: any): void;
-        clear(): void;
-        delete(keys: any[]): void;
-        forEach(fun: (value: any, keys: any[]) => void): void;
-    };
+    getUseInfo(id: string): mapMK.MapMultiKeys<true>;
     /**
      * 使用资源
      * @param keyUse        标识使用的key
