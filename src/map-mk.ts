@@ -87,14 +87,15 @@ export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
         forEach(fun: (value: T, keys: string[]) => void) {
             forEachMap(_map, []);
             function forEachMap(map: {[key: string]: any}, lastKeys: string[]) {
-                map.forEach((value, key) => {
+                for (let key in map) {
+                    const value = map[key];
                     lastKeys = lastKeys.concat(key);
                     if (lastKeys.length < keyCount) {
                         forEachMap(value, lastKeys);
                     } else {
                         fun(value, lastKeys);
                     }
-                });
+                }
             }
         }
 
