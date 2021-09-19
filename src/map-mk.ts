@@ -15,8 +15,8 @@ export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
         return false;
     }
 
-    function _checkKeysLessKeyCount(keys: string[]) {
-        if (keys && keys.length < keyCount) return true;
+    function _checkKeysLEKeyCount(keys: string[]) {
+        if (keys && keys.length <= keyCount) return true;
         console.error(`Multiple keys map: keys length is not less than key count!`);
         return false;
     }
@@ -57,7 +57,7 @@ export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
         },
 
         delete(keys: string[]) {
-            if (_checkKeysLessKeyCount(keys)) {
+            if (_checkKeysLEKeyCount(keys)) {
                 const maps: {[key: string]: any}[] = [];
                 const countMap = maps.length = keyCount;
                 const keyCountDecOne = keyCount - 1;
