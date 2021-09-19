@@ -1,4 +1,5 @@
 export type MapMultiKeys<T> = {
+    map: any,
     get(keys: string[]): T,
     set(keys: string[], value: T): void,
     clear(): void,
@@ -22,6 +23,8 @@ export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
     }
 
     return {
+        get map() { return _map; },
+        
         get(keys: string[]): T {
             if (_checkKeysEqualKeyCount(keys)) {
                 var value = _map;

@@ -194,6 +194,7 @@ export class AssetsAgent {
         });
 
         doFrees.forEach((item) => {
+            waitFrees.delete([item.keyUse, item.bundle.name, (item.type as any).name, item.path]);
             this._doFree(item.keyUse, item.path, item.type, item.bundle);
         });
     }
@@ -248,14 +249,12 @@ export class AssetsAgent {
             keyUse: arguments[0], 
             path: arguments[1], 
             type: arguments[2],
-            bundle: arguments[3] || cc.resources,
+            bundle: cc.resources,
         };
-        for (let i = 2; i < arguments.length; ++i) {
-            if (i == 2 && isChildClassOf(arguments[i], cc.Asset)) {
-                ret.type = arguments[i];
-            } else if (i == 3 && isChildClassOf(arguments[i], cc.AssetManager.Bundle)) {
-                ret.bundle = arguments[i];
-            }else if (typeof arguments[i] == "function") {
+        for (let i = 3; i < arguments.length; ++i) {
+            if (i == 3 && typeof arguments[i] !== "function") {
+                ret.bundle = arguments[i] || cc.resources;
+            } else if (typeof arguments[i] == "function") {
                 // 其他情况为函数
                 if (arguments.length > i + 1 && typeof arguments[i + 1] == "function") {
                     ret.onProgess = arguments[i];
