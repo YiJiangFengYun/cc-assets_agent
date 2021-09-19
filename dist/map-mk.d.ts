@@ -1,4 +1,5 @@
 export declare type MapMultiKeys<T> = {
+    map: any;
     get(keys: string[]): T;
     set(keys: string[], value: T): void;
     clear(): void;
