@@ -1,7 +1,7 @@
 import * as mapMK from "./map-mk";
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 export declare type CompletedCallback = (error: Error, asset?: any) => void;
-export declare class AssetAgent {
+export declare class AssetsAgent {
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
@@ -63,4 +63,4 @@ export declare class AssetAgent {
      */
     private _makeArgsFree;
 }
-export declare const assetAgent: AssetAgent;
+export declare const assetsAgent: AssetsAgent;
