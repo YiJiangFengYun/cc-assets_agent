@@ -1,57 +1,64 @@
+export type MapMultiKeys<T> = {
+    get(keys: string[]): T,
+    set(keys: string[], value: T): void,
+    clear(): void,
+    delete(keys: string[]): void,
+    forEach(fun: (value: any, keys: string[]) => void): void,
+}
 
-export function createMapMultiKeys(keyCount: number) {
-    const _map = new Map();
+export function createMapMultiKeys<T>(keyCount: number): MapMultiKeys<T> {
+    var _map = {};
 
-    function _checkKeysEqualKeyCount(keys: any[]) {
+    function _checkKeysEqualKeyCount(keys: string[]) {
         if (keys && keys.length === keyCount) return true;
         console.error(`Multiple keys map: keys length is not equal to key count!`);
         return false;
     }
 
-    function _checkKeysLessKeyCount(keys: any[]) {
+    function _checkKeysLessKeyCount(keys: string[]) {
         if (keys && keys.length < keyCount) return true;
         console.error(`Multiple keys map: keys length is not less than key count!`);
         return false;
     }
 
     return {
-        get(keys: any[]): any {
+        get(keys: string[]): T {
             if (_checkKeysEqualKeyCount(keys)) {
                 var value = _map;
                 for (let key of keys) {
-                    value = value.get(key);
+                    value = value[key];
                     if (! value) return value as any;
                 }
                 return value as any;
             }
         },
 
-        set(keys: any[], value: any) {
+        set(keys: string[], value: T) {
             if (_checkKeysEqualKeyCount(keys)) {
                 var map = _map;
                 const keyCount = keys.length;
                 const keyCountDecOne = keyCount - 1;
                 var i = 0;
                 while (i < keyCountDecOne) {
-                    let map2 = map.get(keys[i]);
+                    let map2 = map[keys[i]];
                     if ( ! map2) {
-                        map2 = new Map();
-                        map.set(keys[i], map2);
+                        map2 = {};
+                        map[keys[i]] = map2;
                     }
                     map = map2;
                     ++i;
                 }
-                map.set(keys[i], value);
+                map[keys[i]] = value;
             }
         },
 
         clear() {
-            _map.clear();
+            _map = {};
         },
 
-        delete(keys: any[]) {
+        delete(keys: string[]) {
             if (_checkKeysLessKeyCount(keys)) {
-                const maps: Map<any, any>[] = [];
+                const maps: {[key: string]: any}[] = [];
                 const countMap = maps.length = keyCount;
                 const keyCountDecOne = keyCount - 1;
                 const keyLength = keys.length;
@@ -60,7 +67,7 @@ export function createMapMultiKeys(keyCount: number) {
                 while (index < countMap && value) {
                     maps[index] = value;
                     if (index < keyCountDecOne && index < keyLength) 
-                        value = value.get(keys[index]);
+                        value = value[keys[index]];
                     ++index;
                 }
 
@@ -77,9 +84,9 @@ export function createMapMultiKeys(keyCount: number) {
             }
         },
 
-        forEach(fun: (value: any, keys: any[]) => void) {
+        forEach(fun: (value: T, keys: string[]) => void) {
             forEachMap(_map, []);
-            function forEachMap(map: Map<any, any>, lastKeys: any[]) {
+            function forEachMap(map: {[key: string]: any}, lastKeys: string[]) {
                 map.forEach((value, key) => {
                     lastKeys = lastKeys.concat(key);
                     if (lastKeys.length < keyCount) {
@@ -87,12 +94,10 @@ export function createMapMultiKeys(keyCount: number) {
                     } else {
                         fun(value, lastKeys);
                     }
-                })
+                });
             }
         }
 
 
     }
 }
-
-export type MapMultiKeys = ReturnType<typeof createMapMultiKeys>;
