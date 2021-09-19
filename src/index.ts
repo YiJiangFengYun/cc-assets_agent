@@ -32,7 +32,7 @@ if (!isChildClassOf) {
 //默认过期时间，单位秒
 const DELAY_FREE_DEFAULT = 60;
 
-export class AssetAgent {
+export class AssetsAgent {
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
@@ -284,5 +284,5 @@ export class AssetAgent {
     }
 }
 
-export const assetAgent = new AssetAgent();
-if (window) (window as any).assetAgent = assetAgent;
+export const assetsAgent = new AssetsAgent();
+if (window) (window as any).assetsAgent = assetsAgent;
