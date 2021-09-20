@@ -1,6 +1,6 @@
 {
   "name": "cc-assets_agent",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cocos creator assets agent for providing a additional feature to manage better assets.",
   "main": "dist/index.js",
   "scripts": {
