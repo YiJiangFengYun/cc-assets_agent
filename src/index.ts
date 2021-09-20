@@ -167,7 +167,6 @@ export class AssetsAgent {
             const assetUse = this._mapUses[args.keyUse];
             if (assetUse) {
                 for (let key in assetUse) {
-                    const value = assetUse[key];
                     const keys = key.split(" ");
                     this._addWaitFree({
                         keyUse: args.keyUse,
