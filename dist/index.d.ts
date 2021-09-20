@@ -1,17 +1,16 @@
-import * as mapMK from "./map-mk";
 export declare type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 export declare type CompletedCallback = (error: Error, asset?: any) => void;
 export declare class AssetsAgent {
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
-     * {[唯一key]:{[bundle, 资源类型, 路径]: true }}
+     * {[唯一key]:{["bundle 资源类型 路径"]: true }}
      */
     private _mapUses;
     private _loadingCount;
     /**
      * 等待释放得资源
-     * {[唯一key, bundle, 资源类型, 路径]: 释放时间}
+     * {["唯一key bundle 资源类型 路径"]: 释放时间}
      */
     private _waitFrees;
     /**
@@ -24,7 +23,9 @@ export declare class AssetsAgent {
     constructor(delayFree?: number);
     del(): void;
     init(delayFree?: number): void;
-    getUseInfo(id: string): mapMK.MapMultiKeys<true>;
+    getUseInfo(id: string): {
+        [str: string]: true;
+    };
     /**
      * 使用资源
      * @param keyUse        标识使用的key
