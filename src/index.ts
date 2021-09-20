@@ -1,5 +1,3 @@
-import * as mapMK from "./map-mk";
-
 // // 资源加载的处理回调
 export type ProcessCallback = (completedCount: number, totalCount: number, item: any) => void;
 // // 资源加载的完成回调
@@ -36,18 +34,18 @@ export class AssetsAgent {
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
-     * {[唯一key]:{[bundle, 资源类型, 路径]: true }}
+     * {[唯一key]:{["bundle 资源类型 路径"]: true }}
      */
-    private _mapUses: { [key: string]: mapMK.MapMultiKeys<true> } = {};
+    private _mapUses: { [key: string]: {[str: string]:true} } = {};
     // private _mapUses: { [ key: string ]: [ string, typeof cc.Asset, cc.AssetManager.Bundle ][] } = {};
 
     private _loadingCount = 0;
 
     /**
      * 等待释放得资源
-     * {[唯一key, bundle, 资源类型, 路径]: 释放时间}
+     * {["唯一key bundle 资源类型 路径"]: 释放时间}
      */
-    private _waitFrees: mapMK.MapMultiKeys<number> = mapMK.createMapMultiKeys(4);
+    private _waitFrees: {[str: string]: number} = {};
 
     /**
      * 标记是否已经被销毁了
@@ -114,21 +112,21 @@ export class AssetsAgent {
 
             let assetUse = mapUses[args.keyUse];
             if (! assetUse) {
-                mapUses[args.keyUse] = assetUse = mapMK.createMapMultiKeys(3);
+                mapUses[args.keyUse] = assetUse = {};
             }
 
             // const pair: [ string, typeof cc.Asset ] = [ args.path, args.type ];
 
             if (! mapNameAssetTypes[(args.type as any).name]) mapNameAssetTypes[(args.type as any).name] = args.type;
 
-            const notExists = ! assetUse.get([args.bundle.name, (args.type as any).name, args.path]);
+            const notExists = ! assetUse[`${args.bundle.name} ${(args.type as any).name} ${args.path}`];
 
 
             if (notExists) {
 
                 asset.addRef();
 
-                assetUse.set([args.bundle.name, (args.type as any).name, args.path], true);
+                assetUse[`${args.bundle.name} ${(args.type as any).name} ${args.path}`] = true;
             }
 
             // 执行完成回调
@@ -167,14 +165,18 @@ export class AssetsAgent {
             this._addWaitFree(args);
         } else {
             const assetUse = this._mapUses[args.keyUse];
-            assetUse && assetUse.forEach((value, keys) => {
-                this._addWaitFree({
-                    keyUse: args.keyUse,
-                    bundle: cc.assetManager.getBundle(keys[0]),
-                    type: mapNameAssetTypes[keys[1]],
-                    path: keys[2],
-                });
-            });
+            if (assetUse) {
+                for (let key in assetUse) {
+                    const value = assetUse[key];
+                    const keys = key.split(" ");
+                    this._addWaitFree({
+                        keyUse: args.keyUse,
+                        bundle: cc.assetManager.getBundle(keys[0]),
+                        type: mapNameAssetTypes[keys[1]],
+                        path: keys[2],
+                    });
+                }
+            }
         }
     }
 
@@ -182,7 +184,9 @@ export class AssetsAgent {
         const waitFrees = this._waitFrees;
         const time = this._time;
         const doFrees: ArgsFreeAsset[] = [];
-        waitFrees.forEach((expires, keys) => {
+        for (let str in waitFrees) {
+            const keys = str.split(" ");
+            const expires = waitFrees[str];
             if (expires <= time) {
                 doFrees.push({
                     keyUse: keys[0],
@@ -191,10 +195,10 @@ export class AssetsAgent {
                     path: keys[3],
                 });
             }
-        });
+        }
 
         doFrees.forEach((item) => {
-            waitFrees.delete([item.keyUse, item.bundle.name, (item.type as any).name, item.path]);
+            delete waitFrees[`${item.keyUse} ${item.bundle.name} ${(item.type as any).name} ${item.path}`];
             this._doFree(item.keyUse, item.path, item.type, item.bundle);
         });
     }
@@ -202,16 +206,19 @@ export class AssetsAgent {
     private _doFree(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle) {
         const mapUses = this._mapUses;
         const assetUse = mapUses[keyUse];
-        assetUse.delete([bundle.name, (type as any).name, path]);
+        delete assetUse[`${bundle.name} ${(type as any).name} ${path}`];
         bundle.get(path, type).decRef();
+        if ( ! Object.keys(assetUse).length) {
+            delete mapUses[keyUse];
+        }
     }
 
     private _addWaitFree(args: ArgsFreeAsset) {
-        this._waitFrees.set([args.keyUse, args.bundle.name, (args.type as any).name, args.path], this._time + this._delayFree);
+        this._waitFrees[`${args.keyUse} ${args.bundle.name} ${(args.type as any).name} ${args.path}`] = this._time + this._delayFree;
     }
 
     private _removeWaitFree(args: ArgsUseAsset) {
-        this._waitFrees.delete([args.keyUse, args.bundle.name, (args.type as any).name, args.path]);
+        delete this._waitFrees[`${args.keyUse} ${args.bundle.name} ${(args.type as any).name} ${args.path}`];
     }
 
     private _update() {
@@ -226,13 +233,16 @@ export class AssetsAgent {
         const mapUses = this._mapUses;
         for (let key in mapUses) {
             const assetUse = mapUses[key];
-            assetUse && assetUse.forEach((_, keys) => {
-                const asset = cc.assetManager.getBundle(keys[0]).get(keys[2], mapNameAssetTypes[keys[1]]);
-                asset.decRef();
-            });
+            if (assetUse) {
+                for (let str in assetUse) {
+                    const keys = str.split(" ");
+                    const asset = cc.assetManager.getBundle(keys[0]).get(keys[2], mapNameAssetTypes[keys[1]]);
+                    asset.decRef();
+                }
+            }
         }
         this._mapUses = {};
-        this._waitFrees.clear();
+        this._waitFrees = {};
         this._time = 0;
     }
 
@@ -246,8 +256,8 @@ export class AssetsAgent {
            throw new Error(`Arguments is invalid !`);
         }
         let ret: ArgsUseAsset = { 
-            keyUse: arguments[0], 
-            path: arguments[1], 
+            keyUse: arguments[0].trim(), 
+            path: arguments[1].trim(), 
             type: arguments[2],
             bundle: cc.resources,
         };
@@ -274,8 +284,8 @@ export class AssetsAgent {
             throw new Error(`Arguments is invalid !`);
         }
         let ret: ArgsFreeAsset = { 
-            keyUse: arguments[0], 
-            path: arguments[1],
+            keyUse: arguments[0].trim(), 
+            path: typeof arguments[1] === "string" ? arguments[1].trim() : arguments[1],
             type: arguments[2],
             bundle: arguments[3] || cc.resources,
         };
