@@ -139,11 +139,11 @@ export class AssetsAgent {
         this._removeWaitFree(args);
 
         // 预判是否资源已加载
-        let asset = cc.resources.get(args.path, args.type);
+        let asset = args.bundle.get(args.path, args.type);
         if (asset) {
             finishCallback(null, asset);
         } else {
-            cc.resources.load(args.path, args.type, args.onProgess, finishCallback);
+            args.bundle.load(args.path, args.type, args.onProgess, finishCallback);
         }
     }
 
