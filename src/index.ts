@@ -210,16 +210,16 @@ export class AssetsAgent {
 
             // const pair: [ string, typeof cc.Asset ] = [ args.path, args.type ];
 
-            if (! mapNameAssetTypes[(args.type as any).name]) mapNameAssetTypes[args.type.name] = args.type;
+            if (! mapNameAssetTypes[args.type.name]) mapNameAssetTypes[args.type.name] = args.type;
 
-            const notExists = ! assetUse[`${args.bundle.name} ${(args.type as any).name} ${args.path}`];
+            const notExists = ! assetUse[`${args.bundle.name} ${args.type.name} ${args.path}`];
 
 
             if (notExists) {
 
                 asset.addRef();
 
-                assetUse[`${args.bundle.name} ${(args.type as any).name} ${args.path}`] = true;
+                assetUse[`${args.bundle.name} ${args.type.name} ${args.path}`] = true;
             }
 
             // 执行完成回调
@@ -290,7 +290,7 @@ export class AssetsAgent {
         }
 
         doFrees.forEach((item) => {
-            delete waitFrees[`${item.keyUse} ${item.bundle.name} ${(item.type as any).name} ${item.path}`];
+            delete waitFrees[`${item.keyUse} ${item.bundle.name} ${item.type.name} ${item.path}`];
             this._doFree(item.keyUse, item.path, item.type, item.bundle);
         });
     }
@@ -298,7 +298,7 @@ export class AssetsAgent {
     private _doFree(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle) {
         const mapUses = this._mapUses;
         const assetUse = mapUses[keyUse];
-        delete assetUse[`${bundle.name} ${(type as any).name} ${path}`];
+        delete assetUse[`${bundle.name} ${type.name} ${path}`];
         bundle.get(path, type.type).decRef();
         if ( ! Object.keys(assetUse).length) {
             delete mapUses[keyUse];
@@ -306,11 +306,11 @@ export class AssetsAgent {
     }
 
     private _addWaitFree(args: ArgsFreeAsset) {
-        this._waitFrees[`${args.keyUse} ${args.bundle.name} ${(args.type as any).name} ${args.path}`] = this._time + this._delayFree;
+        this._waitFrees[`${args.keyUse} ${args.bundle.name} ${args.type.name} ${args.path}`] = this._time + this._delayFree;
     }
 
     private _removeWaitFree(args: ArgsUseAsset) {
-        delete this._waitFrees[`${args.keyUse} ${args.bundle.name} ${(args.type as any).name} ${args.path}`];
+        delete this._waitFrees[`${args.keyUse} ${args.bundle.name} ${args.type.name} ${args.path}`];
     }
 
     private _update() {
