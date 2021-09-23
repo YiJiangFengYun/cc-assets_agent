@@ -5,6 +5,8 @@ export declare type TypeInfo = {
     type: typeof cc.Asset;
 };
 export declare class AssetsAgent {
+    private _mapTypeInfos;
+    private _mapNameTypeInfos;
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
@@ -27,6 +29,7 @@ export declare class AssetsAgent {
     constructor(delayFree?: number);
     del(): void;
     init(delayFree?: number): void;
+    registerTypeInfo(name: string, type: typeof cc.Asset): void;
     getUseInfo(id: string): {
         [str: string]: true;
     };
@@ -38,12 +41,12 @@ export declare class AssetsAgent {
      * @param onProgess     加载进度回调
      * @param onCompleted   加载完成回调
      */
-    use(keyUse: string, path: string, type: TypeInfo): any;
-    use(keyUse: string, path: string, type: TypeInfo, onCompleted: CompletedCallback): any;
-    use(keyUse: string, path: string, type: TypeInfo, onProgess: ProcessCallback, onCompleted: CompletedCallback): any;
-    use(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle): any;
-    use(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback): any;
-    use(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset, onCompleted: CompletedCallback): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset, onProgess: ProcessCallback, onCompleted: CompletedCallback): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback): any;
+    use(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback): any;
     /**
      * 释放资源
      * @param keyUse        标识使用的key
@@ -51,8 +54,8 @@ export declare class AssetsAgent {
      * @param type          资源类型
      */
     free(keyUse: string): any;
-    free(keyUse: string, path: string, type: TypeInfo): any;
-    free(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle): any;
+    free(keyUse: string, path: string, type: typeof cc.Asset): any;
+    free(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle): any;
     private _checkAndDoWaitFrees;
     private _doFree;
     private _addWaitFree;
