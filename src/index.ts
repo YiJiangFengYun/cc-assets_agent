@@ -170,6 +170,8 @@ export class AssetsAgent {
 
     public getTypeInfo(type: typeof cc.Asset) { return this._mapTypeInfos.get(type); }
 
+    public getTypeInfoWithName(name: string) { return this._mapNameTypeInfos[name]; }
+
     public getUseInfo(id: string) {
         return this._mapUses[id];
     }
