@@ -30,6 +30,7 @@ export declare class AssetsAgent {
     del(): void;
     init(delayFree?: number): void;
     registerTypeInfo(name: string, type: typeof cc.Asset): void;
+    getTypeInfo(type: typeof cc.Asset): TypeInfo;
     getUseInfo(id: string): {
         [str: string]: true;
     };
