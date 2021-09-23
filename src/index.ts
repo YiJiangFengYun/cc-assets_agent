@@ -33,6 +33,10 @@ if (!isChildClassOf) {
 const DELAY_FREE_DEFAULT = 60;
 
 export class AssetsAgent {
+
+    private _mapTypeInfos: Map<typeof cc.Asset, TypeInfo> = new Map();
+    private _mapNameTypeInfos: { [name: string]: TypeInfo } = {};
+
     /**
      * 外部使用信息
      * 外部通过唯一的id使用某些资源
@@ -63,6 +67,85 @@ export class AssetsAgent {
     public constructor(delayFree: number = DELAY_FREE_DEFAULT) {
         this._delayFree = delayFree;
         this._intervalIndex = setInterval(this._update.bind(this), 1000);
+
+        const typeInfosBuildIn: TypeInfo[] = [
+            {
+                name: "text",
+                type: cc.TextAsset,
+            },
+            {
+                name: "buffer",
+                type: cc.BufferAsset,
+            },
+            {
+                name: "texture_2d",
+                type: cc.Texture2D,
+            },
+            {
+                name: "sprite_frame",
+                type: cc.SpriteFrame,
+            },
+            {
+                name: "mesh",
+                type: cc.Mesh,
+            },
+            {
+                name: "effect",
+                type: cc.EffectAsset,
+            },
+            {
+                name: "material",
+                type: cc.Material,
+            },
+            {
+                name: "physics_material",
+                type: cc.PhysicsMaterial,
+            },
+            {
+                name: "animation_clip",
+                type: cc.AnimationClip,
+            },
+            {
+                name: "audio_clip",
+                type: cc.AudioClip,
+            },
+            {
+                name: "prefab",
+                type: cc.Prefab,
+            },
+            {
+                name: "scene",
+                type: cc.SceneAsset,
+            },
+            {
+                name: "font",
+                type: cc.Font,
+            },
+            {
+                name: "bitmap_font",
+                type: cc.BitmapFont,
+            },
+            {
+                name: "json",
+                type: cc.JsonAsset,
+            },
+            {
+                name: "particle_asset",
+                type: cc.ParticleAsset,
+            },
+            {
+                name: "tiled_map_asset",
+                type: cc.TiledMapAsset,
+            }
+        ];
+
+        const mapTypeInfos = this._mapTypeInfos;
+        const mapNameTypeInfos = this._mapNameTypeInfos;
+
+        typeInfosBuildIn.forEach((item) => {
+            mapTypeInfos.set(item.type, item);
+            mapNameTypeInfos[item.name] = item;
+        });
     }
 
     public del() {
@@ -77,6 +160,14 @@ export class AssetsAgent {
         this._clear();
     }
 
+    public registerTypeInfo(name: string, type: typeof cc.Asset) {
+        if (this._mapTypeInfos.get(type)) throw new Error(`The type has been registered!`);
+        if (this._mapNameTypeInfos[name]) throw new Error(`The type name (${name}) has been registered !`);
+        const typeInfo = { name, type };
+        this._mapTypeInfos.set(type, typeInfo);
+        this._mapNameTypeInfos[name] = typeInfo;
+    }
+
     public getUseInfo(id: string) {
         return this._mapUses[id];
     }
@@ -89,12 +180,12 @@ export class AssetsAgent {
      * @param onProgess     加载进度回调
      * @param onCompleted   加载完成回调
      */
-    public use(keyUse:  string, path: string, type: TypeInfo);
-    public use(keyUse:  string, path: string, type: TypeInfo, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: TypeInfo, onProgess: ProcessCallback, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle);
-    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset, onProgess: ProcessCallback, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback);
     public use() {
         if (this._isDestroyed) {
             return;
@@ -156,8 +247,8 @@ export class AssetsAgent {
      * @param type          资源类型
      */
     public free(keyUse: string);
-    public free(keyUse: string, path: string, type: TypeInfo);
-    public free(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle);
+    public free(keyUse: string, path: string, type: typeof cc.Asset);
+    public free(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle);
     public free() {
         if (this._isDestroyed) {
             return;
@@ -256,10 +347,15 @@ export class AssetsAgent {
             typeof arguments[1] !== "string") {
            throw new Error(`Arguments is invalid !`);
         }
+
+        const type: typeof cc.Asset = arguments[2];
+        const typeInfo = this._mapTypeInfos.get(type);
+        if (! typeInfo) throw new Error(`Invalid cc asset type!`);
+
         let ret: ArgsUseAsset = { 
             keyUse: arguments[0].trim(), 
             path: arguments[1].trim(), 
-            type: arguments[2],
+            type: typeInfo,
             bundle: cc.resources,
         };
         for (let i = 3; i < arguments.length; ++i) {
@@ -284,10 +380,18 @@ export class AssetsAgent {
         if (arguments.length < 1 || typeof arguments[0] != "string") {
             throw new Error(`Arguments is invalid !`);
         }
+
+        var typeInfo: TypeInfo;
+        if (arguments[2]) {
+            const type: typeof cc.Asset = arguments[2];
+            typeInfo = this._mapTypeInfos.get(type);
+            if (! typeInfo) throw new Error(`Invalid cc asset type!`);
+        }
+
         let ret: ArgsFreeAsset = { 
             keyUse: arguments[0].trim(), 
             path: typeof arguments[1] === "string" ? arguments[1].trim() : arguments[1],
-            type: arguments[2],
+            type: typeInfo,
             bundle: arguments[3] || cc.resources,
         };
         return ret;
