@@ -3,12 +3,14 @@ export type ProcessCallback = (completedCount: number, totalCount: number, item:
 // // 资源加载的完成回调
 export type CompletedCallback = (error: Error, asset?: any) => void;
 
-const mapNameAssetTypes: {[name: string]: typeof cc.Asset} = {};
+const mapNameAssetTypes: {[name: string]: TypeInfo} = {};
+
+export type TypeInfo = { name: string, type: typeof cc.Asset };
 
 interface ArgsUseAsset {
     keyUse: string;
     path: string,
-    type: typeof cc.Asset,
+    type: TypeInfo,
     bundle: cc.AssetManager.Bundle,
     onCompleted?: CompletedCallback,
     onProgess?: ProcessCallback,
@@ -17,7 +19,7 @@ interface ArgsUseAsset {
 interface ArgsFreeAsset {
     keyUse: string,
     path: string,
-    type: typeof cc.Asset,
+    type: TypeInfo,
     bundle: cc.AssetManager.Bundle,
 }
 
@@ -87,12 +89,12 @@ export class AssetsAgent {
      * @param onProgess     加载进度回调
      * @param onCompleted   加载完成回调
      */
-    public use(keyUse:  string, path: string, type: typeof cc.Asset);
-    public use(keyUse:  string, path: string, type: typeof cc.Asset, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: typeof cc.Asset, onProgess: ProcessCallback, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle);
-    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback);
-    public use(keyUse:  string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: TypeInfo);
+    public use(keyUse:  string, path: string, type: TypeInfo, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: TypeInfo, onProgess: ProcessCallback, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle);
+    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onCompleted: CompletedCallback);
+    public use(keyUse:  string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle, onProgess: ProcessCallback, onCompleted: CompletedCallback);
     public use() {
         if (this._isDestroyed) {
             return;
@@ -117,7 +119,7 @@ export class AssetsAgent {
 
             // const pair: [ string, typeof cc.Asset ] = [ args.path, args.type ];
 
-            if (! mapNameAssetTypes[(args.type as any).name]) mapNameAssetTypes[(args.type as any).name] = args.type;
+            if (! mapNameAssetTypes[(args.type as any).name]) mapNameAssetTypes[args.type.name] = args.type;
 
             const notExists = ! assetUse[`${args.bundle.name} ${(args.type as any).name} ${args.path}`];
 
@@ -139,11 +141,11 @@ export class AssetsAgent {
         this._removeWaitFree(args);
 
         // 预判是否资源已加载
-        let asset = args.bundle.get(args.path, args.type);
+        let asset = args.bundle.get(args.path, args.type.type);
         if (asset) {
             finishCallback(null, asset);
         } else {
-            args.bundle.load(args.path, args.type, args.onProgess, finishCallback);
+            args.bundle.load(args.path, args.type.type, args.onProgess, finishCallback);
         }
     }
 
@@ -154,8 +156,8 @@ export class AssetsAgent {
      * @param type          资源类型
      */
     public free(keyUse: string);
-    public free(keyUse: string, path: string, type: typeof cc.Asset);
-    public free(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle);
+    public free(keyUse: string, path: string, type: TypeInfo);
+    public free(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle);
     public free() {
         if (this._isDestroyed) {
             return;
@@ -202,11 +204,11 @@ export class AssetsAgent {
         });
     }
 
-    private _doFree(keyUse: string, path: string, type: typeof cc.Asset, bundle: cc.AssetManager.Bundle) {
+    private _doFree(keyUse: string, path: string, type: TypeInfo, bundle: cc.AssetManager.Bundle) {
         const mapUses = this._mapUses;
         const assetUse = mapUses[keyUse];
         delete assetUse[`${bundle.name} ${(type as any).name} ${path}`];
-        bundle.get(path, type).decRef();
+        bundle.get(path, type.type).decRef();
         if ( ! Object.keys(assetUse).length) {
             delete mapUses[keyUse];
         }
@@ -235,7 +237,7 @@ export class AssetsAgent {
             if (assetUse) {
                 for (let str in assetUse) {
                     const keys = str.split(" ");
-                    const asset = cc.assetManager.getBundle(keys[0]).get(keys[2], mapNameAssetTypes[keys[1]]);
+                    const asset = cc.assetManager.getBundle(keys[0]).get(keys[2], mapNameAssetTypes[keys[1]].type);
                     asset.decRef();
                 }
             }
